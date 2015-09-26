@@ -1,0 +1,380 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-card/paper-card.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-input/iron-input.html">
+<link rel="import" href="../iron-selector/iron-selector.html">
+
+
+<dom-module id="month-picker">
+
+
+	<template>
+
+		<style>
+			/* local DOM styles go here */
+			
+			:host {
+				display: inline-block;
+				font-family: 'Roboto', sans-serif;
+				--paper-card-content: {
+					padding: 0;
+				}
+			}
+			
+			#container {
+				position: absolute;
+				top: 0;
+				left: 0;
+				display: none;
+				transition: all 0.3s ease-out;
+			}
+			
+			#top {
+				padding: 1rem;
+			}
+			
+			#top,
+			.month.iron-selected {
+				background-color: var(--year-selector-main, #4CAF50);
+				color: var(--month-picker-top-picker, white);
+			}
+			
+			#selectedDisplay {
+				font-size: 1.2em;
+			}
+			
+			#buttom {
+				padding: 1rem;
+			}
+			/* The year */
+			
+			#selectorCover {
+				display: inline-block;
+				position: relative;
+				width: 180px;
+				height: 1em;
+				overflow: hidden;
+			}
+			
+			#yearSelection {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				transition: all 0.3s ease-out;
+				cursor: pointer;
+			}
+			
+			#yearSelection > div {
+				display: block;
+				position: absolute;
+				top: 0;
+				width: 100%;
+				text-align: center;
+			}
+			
+			iron-icon {
+				cursor: pointer;
+				margin-top: -9px;
+			}
+			
+			input {
+				display: none;
+				position: absolute;
+				z-index: 900;
+				top: 0;
+				left: 0;
+				height: 100%;
+				width: 100%;
+				text-align: center;
+				border: none;
+				outline: none;
+				padding: 0;
+				margin: 0;
+				font-size: 1em;
+			}
+			
+			#monthSelection {
+				text-align: center;
+				display: block;
+				width: 200px;
+				margin: 1em auto;
+				margin-bottom: 0;
+			}
+			/*Month selection */
+			
+			.month {
+				display: inline-block;
+				width: 40px;
+				height: 40px;
+				line-height: 40px;
+				margin: 5px;
+				transition: all 0.3s ease-out;
+				border-radius: 50%;
+				cursor: pointer;
+			}
+			/* What is seen with picker closed */
+			
+			#display {
+				cursor: pointer;
+			}
+		</style>
+
+		<paper-button id="display">
+			<span>{{monthString}}</span>, <span>{{year}}</span>
+		</paper-button>
+
+		<!-- local DOM goes here -->
+		<paper-card elevation="2" id="container">
+
+			<div class="card-content">
+				<!-- Display current selection -->
+				<div id="top">
+					<span id="selectedDisplay"><span>{{monthString}}</span>, <span>{{year}}</span></span>
+
+				</div>
+
+				<!-- Display Year and month changer -->
+				<div id="buttom">
+
+					<!-- Year slection -->
+					<div>
+						<iron-icon id="prevYear" icon="icons:chevron-left"></iron-icon>
+
+						<div id="selectorCover">
+							<input is="iron-input" bind-value="{{year}}">
+							<iron-selector id="yearSelection" attr-for-selected="year" selected="{{year}}"></iron-selector>
+
+						</div>
+
+						<iron-icon id="nextYear" icon="icons:chevron-right"></iron-icon>
+					</div>
+					<!-- END year selection -->
+
+					<iron-selector id="monthSelection" attr-for-selected="month" selected="{{month}}"></iron-selector>
+
+
+
+				</div>
+				<!-- END buttom -->
+
+			</div>
+			<!-- END Card Content -->
+
+			<div class="card-actions">
+				<paper-button id="ok">OK</paper-button>
+			</div>
+
+			</<paper-card>
+
+	</template>
+
+	<script>
+		//Strings to represent Months on the selector.
+		var monthStrings = [
+			'Jan',
+			'Feb',
+			'Mar',
+			'Apr',
+			'Mai',
+			'Jun',
+			'Jul',
+			'Aug',
+			'Sep',
+			'Okt',
+			'Nov',
+			'Dez'
+		];
+
+		//Base withd of the cover for the years.
+		var baseWidth = 180;
+
+		//Limits for the year that can be selected.
+		var minYear = 0;
+		var maxYear = 3000;
+
+		//The root element for queries.
+		var root = null;
+
+		//remember the last valid year.
+		var lastYear = 0;
+
+		function readyFunction() {
+
+			//Generate the selectable things.
+			setupSelectors(Polymer.dom(this.$.yearSelection), Polymer.dom(this.$.monthSelection));
+
+			root = this;
+
+			this.month = 1;
+		}
+
+		function tapHandler(e) {
+
+			//Year changing
+			if (e.target.id === 'prevYear') {
+				root.$$('#yearSelection').selectPrevious();
+			} else if (e.target.id === 'nextYear') {
+				root.$$('#yearSelection').selectNext();
+			}
+
+			//Open special input for year.
+			if (e.target.getAttribute('yeardiv')) {
+				yearInput(e.target);
+			}
+
+			//Open picker
+			if (e.target.parentNode.id === 'display') {
+				displayPicker();
+			}
+
+			if (e.target.parentNode.id === 'ok') {
+				closePicker();
+			}
+
+		}
+
+		/**
+		 *	Close the picker.
+		 */
+		function closePicker() {
+			root.$$('#container').style.display = 'none';
+		}
+
+		/**
+		 *	Actually shows the picker.
+		 */
+		function displayPicker() {
+			root.$$('#container').style.display = 'block';
+			//TODO display should be independant of the button at a good position.
+		}
+
+		/**
+		 *	Enables the user to input a year by hand.
+		 */
+		function yearInput() {
+			var input = root.$$('input');
+			input.style.display = 'block';
+			input.focus();
+
+			//Remember the current year in case user gives bad input.
+			var prevYear = root.year;
+
+			//A function to reset the input (hide it and do some validation).
+			var reset = function () {
+				if (root.year < minYear || root.year > maxYear || isNaN(root.year)) {
+					root.year = prevYear;
+				}
+				input.style.display = 'none';
+			}
+
+			//Reset everything when focus is lost or enter pressed.
+			input.onblur = function () {
+				reset();
+			}
+			input.onkeypress = function (e) {
+				if (e.keyCode === 13) {
+					reset();
+				}
+			}
+		}
+
+		/**
+		 *	Generates the years that should bepresent in the selector.
+		 */
+		function setupSelectors(yearSelection, monthSelection) {
+			var today = new Date();
+			var fullYear = today.getFullYear();
+			currYear = fullYear;
+
+			//You can select a year out of a given range.
+			minYear = fullYear - 100;
+			maxYear = fullYear + 20;
+			for (var i = minYear; i <= maxYear; i++) {
+
+				//Generate the year.
+				var yearDiv = document.createElement('div');
+				yearDiv.innerHTML = i;
+				yearDiv.setAttribute('year', i);
+				yearDiv.setAttribute('yearDiv', 'yearDiv');
+				var left = (i - minYear) * baseWidth;
+				yearDiv.setAttribute('style', 'left: ' + left + 'px;');
+				yearSelection.appendChild(yearDiv);
+
+
+			}
+
+			//Generate the months selection.
+			for (var j = 1; j <= 12; j++) {
+				var monthDiv = document.createElement('div');
+				monthDiv.setAttribute('class', 'month');
+				monthDiv.setAttribute('month', j);
+				monthDiv.innerHTML = monthStrings[j - 1];
+				monthSelection.appendChild(monthDiv);
+			}
+
+			//Make the current year selected.
+			yearSelection.setAttribute('selected', fullYear);
+
+			//Put selected year in center.
+			var selectionLeft = (fullYear - minYear) * baseWidth * -1; //-1 because we want to move to the left.
+			yearSelection.setAttribute('style', 'left: ' + selectionLeft + 'px;');
+		}
+
+		function yearChanged(yearSelection, year) {
+
+			//Don't animate if year is no Number (can happen for user input).
+			if (isNaN(year) || year.toString().length > 4) {
+				root.year = lastYear;
+				return;
+			}
+
+			//Remember valid year.
+			lastYear = year;
+
+			//Put selected year in center.
+			var selectionLeft = (year - minYear) * baseWidth * -1; //-1 because we want to move to the left.
+			yearSelection.setAttribute('style', 'left: ' + selectionLeft + 'px;');
+		}
+
+		Polymer({
+			is: 'month-picker',
+			ready: readyFunction,
+			properties: {
+
+				year: {
+					type: Number,
+					notify: true,
+					reflectToAttribute: true,
+					observer: '_yearChanged'
+				},
+
+				month: {
+					type: Number,
+					notify: true,
+					reflectToAttribute: true,
+					observer: '_monthChanged'
+				},
+
+				monthString: {
+					type: String
+				}
+
+			},
+			listeners: {
+				'tap': 'regularTap'
+			},
+			regularTap: tapHandler,
+			_yearChanged: function () {
+				yearChanged(this.$.yearSelection, this.year);
+			},
+			_monthChanged: function () {
+				this.monthString = monthStrings[this.month - 1];
+			}
+		});
+	</script>
+
+</dom-module>
