@@ -25,10 +25,15 @@
 				}
 			}
 			
-			#container {
+			:host([pressed]) #dialog {
+				display: block;
+				!important
+			}
+			
+			#dialog {
 				position: absolute;
-				top: 1rem;
-				left: 1rem;
+				top: 0;
+				left: 0;
 				display: none;
 				transition: all 0.3s ease-out;
 			}
@@ -129,7 +134,7 @@
 		</paper-button>
 
 		<!-- local DOM goes here -->
-		<paper-card elevation="2" id="container">
+		<paper-card elevation="2" id="dialog">
 
 			<div class="card-content">
 				<!-- Display current selection -->
@@ -169,13 +174,14 @@
 				<paper-button id="ok">OK</paper-button>
 			</div>
 
-			</paper-card>
+		</paper-card>
 
 	</template>
 
 	<script>
-		//Strings to represent Months on the selector.
-		var monthStrings = [
+		
+			//Strings to represent Months on the selector.
+			var monthStrings = [
 			'Jan',
 			'Feb',
 			'Mar',
@@ -190,192 +196,186 @@
 			'Dez'
 		];
 
-		//Base withd of the cover for the years.
-		var baseWidth = 180;
+			//Base withd of the cover for the years.
+			var baseWidth = 180;
 
-		//Limits for the year that can be selected.
-		var minYear = 0;
-		var maxYear = 3000;
+			//Limits for the year that can be selected.
+			var minYear = 0;
+			var maxYear = 3000;
 
-		//The root element for queries.
-		var root = null;
+			//The root element for queries.
+			var root = null;
 
-		//remember the last valid year.
-		var lastYear = 0;
+			//remember the last valid year.
+			var lastYear = 0;
 
-		function readyFunction() {
+			function readyFunction() {
 
-			//Generate the selectable things.
-			setupSelectors(Polymer.dom(this.$.yearSelection), Polymer.dom(this.$.monthSelection));
+				//Generate the selectable things.
+				setupSelectors(Polymer.dom(this.$.yearSelection), Polymer.dom(this.$.monthSelection));
 
-			root = this;
+				root = this;
 
-			this.month = 1;
-		}
+				this.month = 1;
 
-		function tapHandler(e) {
-
-			//Year changing
-			if (e.target.id === 'prevYear') {
-				root.$$('#yearSelection').selectPrevious();
-			} else if (e.target.id === 'nextYear') {
-				root.$$('#yearSelection').selectNext();
+				console.log(root.$.dialog);
 			}
 
-			//Open special input for year.
-			if (e.target.getAttribute('yeardiv')) {
-				yearInput(e.target);
-			}
+			/**
+			 *	Enables the user to input a year by hand.
+			 */
+			function yearInput() {
+				var input = root.$$('input');
+				input.style.display = 'block';
+				input.focus();
 
-			//Open picker
-			if (e.target.parentNode.id === 'display') {
-				displayPicker();
-			}
+				//Remember the current year in case user gives bad input.
+				var prevYear = root.year;
 
-			if (e.target.parentNode.id === 'ok') {
-				closePicker();
-			}
-
-		}
-
-		/**
-		 *	Close the picker.
-		 */
-		function closePicker() {
-			root.$$('#container').style.display = 'none';
-		}
-
-		/**
-		 *	Actually shows the picker.
-		 */
-		function displayPicker() {
-			root.$$('#container').style.display = 'block';
-			//TODO display should be independant of the button at a good position.
-		}
-
-		/**
-		 *	Enables the user to input a year by hand.
-		 */
-		function yearInput() {
-			var input = root.$$('input');
-			input.style.display = 'block';
-			input.focus();
-
-			//Remember the current year in case user gives bad input.
-			var prevYear = root.year;
-
-			//A function to reset the input (hide it and do some validation).
-			var reset = function () {
-				if (root.year < minYear || root.year > maxYear || isNaN(root.year)) {
-					root.year = prevYear;
+				//A function to reset the input (hide it and do some validation).
+				var reset = function () {
+					if (root.year < minYear || root.year > maxYear || isNaN(root.year)) {
+						root.year = prevYear;
+					}
+					input.style.display = 'none';
 				}
-				input.style.display = 'none';
-			}
 
-			//Reset everything when focus is lost or enter pressed.
-			input.onblur = function () {
-				reset();
-			}
-			input.onkeypress = function (e) {
-				if (e.keyCode === 13) {
+				//Reset everything when focus is lost or enter pressed.
+				input.onblur = function () {
 					reset();
 				}
-			}
-		}
-
-		/**
-		 *	Generates the years that should bepresent in the selector.
-		 */
-		function setupSelectors(yearSelection, monthSelection) {
-			var today = new Date();
-			var fullYear = today.getFullYear();
-			currYear = fullYear;
-
-			//You can select a year out of a given range.
-			minYear = fullYear - 100;
-			maxYear = fullYear + 20;
-			for (var i = minYear; i <= maxYear; i++) {
-
-				//Generate the year.
-				var yearDiv = document.createElement('div');
-				yearDiv.innerHTML = i;
-				yearDiv.setAttribute('year', i);
-				yearDiv.setAttribute('yearDiv', 'yearDiv');
-				var left = (i - minYear) * baseWidth;
-				yearDiv.setAttribute('style', 'left: ' + left + 'px;');
-				yearSelection.appendChild(yearDiv);
-
-
+				input.onkeypress = function (e) {
+					if (e.keyCode === 13) {
+						reset();
+					}
+				}
 			}
 
-			//Generate the months selection.
-			for (var j = 1; j <= 12; j++) {
-				var monthDiv = document.createElement('div');
-				monthDiv.setAttribute('class', 'month');
-				monthDiv.setAttribute('month', j);
-				monthDiv.innerHTML = monthStrings[j - 1];
-				monthSelection.appendChild(monthDiv);
-			}
+			/**
+			 *	Generates the years that should bepresent in the selector.
+			 */
+			function setupSelectors(yearSelection, monthSelection) {
+				var today = new Date();
+				var fullYear = today.getFullYear();
+				currYear = fullYear;
 
-			//Make the current year selected.
-			yearSelection.setAttribute('selected', fullYear);
+				//You can select a year out of a given range.
+				minYear = fullYear - 100;
+				maxYear = fullYear + 20;
+				for (var i = minYear; i <= maxYear; i++) {
 
-			//Put selected year in center.
-			var selectionLeft = (fullYear - minYear) * baseWidth * -1; //-1 because we want to move to the left.
-			yearSelection.setAttribute('style', 'left: ' + selectionLeft + 'px;');
-		}
+					//Generate the year.
+					var yearDiv = document.createElement('div');
+					yearDiv.innerHTML = i;
+					yearDiv.setAttribute('year', i);
+					yearDiv.setAttribute('yearDiv', 'yearDiv');
+					var left = (i - minYear) * baseWidth;
+					yearDiv.setAttribute('style', 'left: ' + left + 'px;');
+					yearSelection.appendChild(yearDiv);
 
-		function yearChanged(yearSelection, year) {
 
-			//Don't animate if year is no Number (can happen for user input).
-			if (isNaN(year) || year.toString().length > 4) {
-				root.year = lastYear;
-				return;
-			}
-
-			//Remember valid year.
-			lastYear = year;
-
-			//Put selected year in center.
-			var selectionLeft = (year - minYear) * baseWidth * -1; //-1 because we want to move to the left.
-			yearSelection.setAttribute('style', 'left: ' + selectionLeft + 'px;');
-		}
-
-		Polymer({
-			is: 'month-picker',
-			ready: readyFunction,
-			properties: {
-
-				year: {
-					type: Number,
-					notify: true,
-					reflectToAttribute: true,
-					observer: '_yearChanged'
-				},
-
-				month: {
-					type: Number,
-					notify: true,
-					reflectToAttribute: true,
-					observer: '_monthChanged'
-				},
-
-				monthString: {
-					type: String
 				}
 
-			},
-			listeners: {
-				'tap': 'regularTap'
-			},
-			regularTap: tapHandler,
-			_yearChanged: function () {
-				yearChanged(this.$.yearSelection, this.year);
-			},
-			_monthChanged: function () {
-				this.monthString = monthStrings[this.month - 1];
+				//Generate the months selection.
+				for (var j = 1; j <= 12; j++) {
+					var monthDiv = document.createElement('div');
+					monthDiv.setAttribute('class', 'month');
+					monthDiv.setAttribute('month', j);
+					monthDiv.innerHTML = monthStrings[j - 1];
+					monthSelection.appendChild(monthDiv);
+				}
+
+				//Make the current year selected.
+				yearSelection.setAttribute('selected', fullYear);
+
+				//Put selected year in center.
+				var selectionLeft = (fullYear - minYear) * baseWidth * -1; //-1 because we want to move to the left.
+				yearSelection.setAttribute('style', 'left: ' + selectionLeft + 'px;');
 			}
-		});
+
+			function yearChanged(yearSelection, year) {
+
+				//Don't animate if year is no Number (can happen for user input).
+				if (isNaN(year) || year.toString().length > 4) {
+					root.year = lastYear;
+					return;
+				}
+
+				//Remember valid year.
+				lastYear = year;
+
+				//Put selected year in center.
+				var selectionLeft = (year - minYear) * baseWidth * -1; //-1 because we want to move to the left.
+				yearSelection.setAttribute('style', 'left: ' + selectionLeft + 'px;');
+			}
+
+			Polymer({
+				is: 'month-picker',
+				ready: readyFunction,
+				properties: {
+
+					year: {
+						type: Number,
+						notify: true,
+						reflectToAttribute: true,
+						observer: '_yearChanged'
+					},
+
+					month: {
+						type: Number,
+						notify: true,
+						reflectToAttribute: true,
+						observer: '_monthChanged'
+					},
+
+					monthString: {
+						type: String
+					},
+
+					pressed: {
+						type: Boolean,
+						value: false,
+						notify: true,
+						reflectToAttribute: true
+					}
+
+				},
+				listeners: {
+					'tap': 'regularTap'
+				},
+				regularTap: function (e) {
+					//Year changing
+					if (e.target.id === 'prevYear') {
+						root.$$('#yearSelection').selectPrevious();
+					} else if (e.target.id === 'nextYear') {
+						root.$$('#yearSelection').selectNext();
+					}
+
+					//Open special input for year.
+					if (e.target.getAttribute('yeardiv')) {
+						yearInput(e.target);
+					}
+
+					//Open picker
+					if (e.target.parentNode.id === 'display') {
+						this.pressed = true;
+						//TODO display at good position not relative to button...
+					}
+
+					if (e.target.parentNode.id === 'ok') {
+						this.pressed = false;
+					}
+
+				},
+				_yearChanged: function () {
+					yearChanged(this.$.yearSelection, this.year);
+				},
+				_monthChanged: function () {
+					this.monthString = monthStrings[this.month - 1];
+				}
+			});
+
+		};
 	</script>
 
 </dom-module>
