@@ -27,7 +27,6 @@
 			
 			:host([pressed]) #dialog {
 				display: block;
-				!important
 			}
 			
 			#dialog {
@@ -36,6 +35,7 @@
 				left: 0;
 				display: none;
 				transition: all 0.3s ease-out;
+				z-index: 9;
 			}
 			
 			#top {
@@ -60,7 +60,7 @@
 			#selectorCover {
 				display: inline-block;
 				position: relative;
-				width: 180px;
+				width: 140px;
 				height: 1em;
 				overflow: hidden;
 			}
@@ -197,7 +197,7 @@
 		];
 
 			//Base withd of the cover for the years.
-			var baseWidth = 180;
+			var baseWidth = 140;
 
 			//Limits for the year that can be selected.
 			var minYear = 0;
@@ -218,7 +218,6 @@
 
 				this.month = 1;
 
-				console.log(root.$.dialog);
 			}
 
 			/**
@@ -346,9 +345,9 @@
 				regularTap: function (e) {
 					//Year changing
 					if (e.target.id === 'prevYear') {
-						root.$$('#yearSelection').selectPrevious();
+						this.$.yearSelection.selectPrevious();
 					} else if (e.target.id === 'nextYear') {
-						root.$$('#yearSelection').selectNext();
+						this.$.yearSelection.selectNext();
 					}
 
 					//Open special input for year.
@@ -374,7 +373,6 @@
 					this.monthString = monthStrings[this.month - 1];
 				}
 			});
-
 	</script>
 
 </dom-module>

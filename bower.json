@@ -9,7 +9,6 @@
     "tests"
   ],
   "dependencies": {
-    "gold-cc-expiration-input": "PolymerElements/gold-cc-expiration-input#~1.0.5",
     "iron-icon": "PolymerElements/iron-icon#~1.0.4",
     "iron-icons": "PolymerElements/iron-icons#~1.0.3",
     "iron-input": "PolymerElements/iron-input#~1.0.6",
